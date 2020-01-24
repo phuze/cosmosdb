@@ -255,10 +255,13 @@ class QueryBuilder
      * @param $fieldName
      * @return $this
      */
-    public function setPartitionKey($fieldName)
+    public function setPartitionKey($fieldName, $toString = false)
     {
+        if ($toString === true) {
+            $this->partitionKey = ltrim(str_replace("/", ".", $fieldName), ".");
+            return $this;
+        }
         $this->partitionKey = $fieldName;
-
         return $this;
     }
 
@@ -404,19 +407,15 @@ class QueryBuilder
     public function delete($isCrossPartition = false)
     {
         $this->response = null;
-
-        $select = $this->fields != "" ?
-            $this->fields : "c._rid" . ($this->partitionKey != null ? ", c.{$this->findPartitionValue($document, true)}" : "");
-
+        $select = !empty($this->fields) ? $this->fields : "c._rid" . (!empty($this->partitionKey) ? ", c.{$this->partitionKey}" : "");
         $document = $this->select($select)->find($isCrossPartition)->toObject();
 
         if ($document) {
-            $partitionValue = $this->partitionKey != null ? $this->findPartitionValue($document) : null;
+            $partitionValue = isset($this->partitionValue) && !empty($this->partitionValue) ? $this->partitionValue : null;
             $this->response = $this->collection->deleteDocument($document->_rid, $partitionValue, $this->triggersAsHeaders("delete"));
-
             return true;
         }
-
+        
         return false;
     }
 
