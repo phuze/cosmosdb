@@ -411,7 +411,7 @@ class QueryBuilder
         $document = $this->select($select)->find($isCrossPartition)->toObject();
 
         if ($document) {
-            $partitionValue = isset($this->partitionValue) && !empty($this->partitionValue) ? $this->partitionValue : null;
+            $partitionValue = !empty($document->type) ? $document->type : null;
             $this->response = $this->collection->deleteDocument($document->_rid, $partitionValue, $this->triggersAsHeaders("delete"));
             return true;
         }
